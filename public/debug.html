@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SmileID Debug</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .debug-section {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      .success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+      }
+      .warning {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+      }
+      .info {
+        background: #d1ecf1;
+        border-color: #bee5eb;
+      }
+      .test-button {
+        margin: 5px;
+        padding: 8px 16px;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        overflow-x: auto;
+        max-height: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>SmileID Debug Console</h1>
+        <p>Comprehensive testing and debugging tools</p>
+        <div class="nav-links">
+          <a href="/" class="link">← Back to Main</a>
+          <a href="/health" class="link">Health Check</a>
+        </div>
+      </header>
+
+      <main>
+        <div class="debug-section info">
+          <h3>🔍 System Environment</h3>
+          <div id="env-check">Running environment checks...</div>
+        </div>
+
+        <div class="debug-section">
+          <h3>🌐 Network & Connectivity Tests</h3>
+          <div class="button-group">
+            <button onclick="testCDN()" class="btn test-button">
+              Test CDN
+            </button>
+            <button onclick="testBackend()" class="btn test-button">
+              Test Backend
+            </button>
+            <button onclick="testCallback()" class="btn test-button">
+              Test Callback
+            </button>
+          </div>
+          <div id="network-results"></div>
+        </div>
+
+        <div class="debug-section">
+          <h3>🎯 SmileID Component Tests</h3>
+          <div class="button-group">
+            <button onclick="testSmileIDScript()" class="btn test-button">
+              Test Script Loading
+            </button>
+            <button onclick="testTokenGeneration()" class="btn test-button">
+              Test Token Generation
+            </button>
+            <button onclick="testComponentCreation()" class="btn test-button">
+              Test Component Creation
+            </button>
+          </div>
+          <div id="component-results"></div>
+
+          <smart-camera-web
+            id="debug-camera"
+            style="
+              width: 100%;
+              height: 300px;
+              border: 1px solid #ddd;
+              margin-top: 15px;
+              display: none;
+            "
+          >
+          </smart-camera-web>
+        </div>
+
+        <div class="debug-section">
+          <h3>📊 Recent Activity</h3>
+          <div class="button-group">
+            <button onclick="getRecentCallbacks()" class="btn test-button">
+              Get Recent Callbacks
+            </button>
+            <button onclick="clearDebugLogs()" class="btn test-button">
+              Clear Debug Logs
+            </button>
+          </div>
+          <div id="activity-results"></div>
+        </div>
+
+        <div class="debug-section">
+          <h3>📝 Debug Console</h3>
+          <pre id="debug-console"></pre>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Debug console setup
+      let debugLogs = [];
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+
+      function captureLog(type, args) {
+        const message = `[${new Date().toISOString()}] ${type.toUpperCase()}: ${Array.from(
+          args
+        ).join(" ")}`;
+        debugLogs.push(message);
+        updateDebugConsole();
+      }
+
+      console.log = function (...args) {
+        originalLog.apply(console, args);
+        captureLog("log", args);
+      };
+
+      console.error = function (...args) {
+        originalError.apply(console, args);
+        captureLog("error", args);
+      };
+
+      console.warn = function (...args) {
+        originalWarn.apply(console, args);
+        captureLog("warn", args);
+      };
+
+      function updateDebugConsole() {
+        document.getElementById("debug-console").textContent = debugLogs
+          .slice(-30)
+          .join("\n");
+      }
+
+      // Environment check
+      function checkEnvironment() {
+        const info = {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          cookieEnabled: navigator.cookieEnabled,
+          onLine: navigator.onLine,
+          protocol: location.protocol,
+          host: location.host,
+          webComponentsSupported: "customElements" in window,
+          esModulesSupported: "noModule" in HTMLScriptElement.prototype,
+          cameraSupported: !!(
+            navigator.mediaDevices && navigator.mediaDevices.getUserMedia
+          ),
+          httpsRequired:
+            location.protocol === "https:" || location.hostname === "localhost",
+        };
+
+        let html = '<div class="grid">';
+        for (const [key, value] of Object.entries(info)) {
+          const status = value ? "✅" : "❌";
+          const className = value ? "success" : "error";
+          html += `<div class="info-item ${className}"><strong>${key}:</strong> ${status} ${
+            typeof value === "boolean" ? "" : value
+          }</div>`;
+        }
+        html += "</div>";
+
+        document.getElementById("env-check").innerHTML = html;
+        console.log("Environment check completed:", info);
+      }
+
+      // Test CDN access
+      async function testCDN() {
+        const results = document.getElementById("network-results");
+        results.innerHTML = "<p>Testing CDN access...</p>";
+
+        const cdnUrls = [
+          "https://cdn.smileidentity.com/js/v1.4.2/smart-camera-web.js",
+          "https://cdn.smileidentity.com/js/v1.4.1/smart-camera-web.js",
+          "https://cdn.smileidentity.com/js/v1.4.0/smart-camera-web.js",
+        ];
+
+        let resultsHtml = "<h4>CDN Test Results:</h4><ul>";
+
+        for (const url of cdnUrls) {
+          try {
+            console.log(`Testing CDN: ${url}`);
+            const startTime = Date.now();
+            const response = await fetch(url, { method: "HEAD" });
+            const duration = Date.now() - startTime;
+            const status = response.ok ? "✅" : "❌";
+            const className = response.ok ? "success" : "error";
+            resultsHtml += `<li class="${className}">${status} ${url} - Status: ${response.status} (${duration}ms)</li>`;
+          } catch (error) {
+            resultsHtml += `<li class="error">❌ ${url} - Error: ${error.message}</li>`;
+          }
+        }
+
+        resultsHtml += "</ul>";
+        results.innerHTML = resultsHtml;
+      }
+
+      // Test backend endpoints
+      async function testBackend() {
+        const results = document.getElementById("network-results");
+        const currentHtml = results.innerHTML;
+
+        const endpoints = [
+          { path: "/health", method: "GET", name: "Health Check" },
+          { path: "/api/token/products", method: "GET", name: "Products List" },
+          {
+            path: "/api/token/generate",
+            method: "POST",
+            name: "Token Generation",
+            body: { userId: "debug-test", product: "biometric_kyc" },
+          },
+        ];
+
+        let resultsHtml = "<h4>Backend Test Results:</h4><ul>";
+
+        for (const endpoint of endpoints) {
+          try {
+            console.log(`Testing backend: ${endpoint.name}`);
+            const startTime = Date.now();
+
+            const options = {
+              method: endpoint.method,
+              headers: { "Content-Type": "application/json" },
+            };
+
+            if (endpoint.body) {
+              options.body = JSON.stringify(endpoint.body);
+            }
+
+            const response = await fetch(endpoint.path, options);
+            const data = await response.json();
+            const duration = Date.now() - startTime;
+
+            const status = response.ok ? "✅" : "❌";
+            const className = response.ok ? "success" : "error";
+            resultsHtml += `<li class="${className}">${status} ${endpoint.name} - Status: ${response.status} (${duration}ms)</li>`;
+
+            if (endpoint.name === "Token Generation" && data.success) {
+              window.debugToken = data.token;
+              window.debugJobId = data.jobId;
+              window.debugUserId = data.userId;
+            }
+          } catch (error) {
+            resultsHtml += `<li class="error">❌ ${endpoint.name} - Error: ${error.message}</li>`;
+          }
+        }
+
+        resultsHtml += "</ul>";
+        results.innerHTML = currentHtml + resultsHtml;
+      }
+
+      // Test callback endpoint
+      async function testCallback() {
+        const results = document.getElementById("network-results");
+        const currentHtml = results.innerHTML;
+
+        try {
+          console.log("Testing callback endpoint...");
+          const testCallbackData = {
+            user_id: "debug-test-user",
+            job_id: "debug-test-job",
+            ResultCode: "0000",
+            ResultText: "Debug test callback",
+            job_type: "biometric_kyc",
+            timestamp: new Date().toISOString(),
+          };
+
+          const response = await fetch("/api/callback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(testCallbackData),
+          });
+
+          const data = await response.json();
+          const status = response.ok ? "✅" : "❌";
+          const className = response.ok ? "success" : "error";
+
+          results.innerHTML =
+            currentHtml +
+            `<h4>Callback Test:</h4><div class="${className}">${status} Callback endpoint - Status: ${response.status}</div>`;
+        } catch (error) {
+          results.innerHTML =
+            currentHtml +
+            `<h4>Callback Test:</h4><div class="error">❌ Callback Error: ${error.message}</div>`;
+        }
+      }
+
+      // Test SmileID script loading
+      function testSmileIDScript() {
+        const results = document.getElementById("component-results");
+
+        console.log("Testing SmileID script loading...");
+
+        const isCustomElementsDefined = "customElements" in window;
+        const isSmileIDDefined = customElements.get("smart-camera-web");
+
+        let html = "<h4>Script Loading Test:</h4><ul>";
+        html += `<li class="${isCustomElementsDefined ? "success" : "error"}">${
+          isCustomElementsDefined ? "✅" : "❌"
+        } Custom Elements API Available</li>`;
+        html += `<li class="${isSmileIDDefined ? "success" : "error"}">${
+          isSmileIDDefined ? "✅" : "❌"
+        } SmileID Web Component Defined</li>`;
+
+        if (isSmileIDDefined) {
+          html +=
+            '<li class="success">✅ SmileID script loaded successfully</li>';
+        } else {
+          html +=
+            '<li class="error">❌ SmileID script not loaded - check CDN connectivity</li>';
+        }
+
+        html += "</ul>";
+        results.innerHTML = html;
+      }
+
+      // Test token generation
+      async function testTokenGeneration() {
+        const results = document.getElementById("component-results");
+        const currentHtml = results.innerHTML;
+
+        try {
+          console.log("Testing token generation...");
+          const response = await fetch("/api/token/test", { method: "POST" });
+          const data = await response.json();
+
+          const status = data.success ? "✅" : "❌";
+          const className = data.success ? "success" : "error";
+
+          results.innerHTML =
+            currentHtml +
+            `<h4>Token Generation Test:</h4><div class="${className}">${status} ${
+              data.success ? "Token generation working" : `Error: ${data.error}`
+            }</div>`;
+        } catch (error) {
+          results.innerHTML =
+            currentHtml +
+            `<h4>Token Generation Test:</h4><div class="error">❌ Token generation failed: ${error.message}</div>`;
+        }
+      }
+
+      // Test component creation
+      function testComponentCreation() {
+        const results = document.getElementById("component-results");
+        const currentHtml = results.innerHTML;
+        const debugCamera = document.getElementById("debug-camera");
+
+        console.log("Testing SmileID component creation...");
+
+        if (!customElements.get("smart-camera-web")) {
+          results.innerHTML =
+            currentHtml +
+            '<h4>Component Creation Test:</h4><div class="error">❌ Cannot test - SmileID script not loaded</div>';
+          return;
+        }
+
+        try {
+          // Show and configure the debug camera
+          debugCamera.style.display = "block";
+
+          if (window.debugToken) {
+            debugCamera.setAttribute("token", window.debugToken);
+            debugCamera.setAttribute("partner-id", "debug-partner");
+          } else {
+            debugCamera.setAttribute("token", "debug-token");
+            debugCamera.setAttribute("partner-id", "debug-partner");
+          }
+
+          let html = "<h4>Component Creation Test:</h4><ul>";
+          html += '<li class="success">✅ Component element created</li>';
+          html += '<li class="success">✅ Attributes set</li>';
+          html +=
+            '<li class="info">📋 Component displayed below (if working)</li>';
+          html += "</ul>";
+
+          // Check for shadow DOM after a delay
+          setTimeout(() => {
+            const hasShadowRoot = !!debugCamera.shadowRoot;
+            const shadowInfo = document.createElement("div");
+            shadowInfo.className = hasShadowRoot ? "success" : "warning";
+            shadowInfo.innerHTML = `<p>${
+              hasShadowRoot ? "✅" : "⚠️"
+            } Shadow DOM: ${hasShadowRoot ? "Present" : "Not Present"}</p>`;
+            results.appendChild(shadowInfo);
+          }, 2000);
+
+          results.innerHTML = currentHtml + html;
+        } catch (error) {
+          results.innerHTML =
+            currentHtml +
+            `<h4>Component Creation Test:</h4><div class="error">❌ Component creation failed: ${error.message}</div>`;
+        }
+      }
+
+      // Get recent callbacks
+      async function getRecentCallbacks() {
+        const results = document.getElementById("activity-results");
+
+        try {
+          console.log("Fetching recent callbacks...");
+          const response = await fetch("/api/callback/recent");
+          const data = await response.json();
+
+          if (data.success) {
+            let html = "<h4>Recent Callbacks:</h4>";
+            if (data.callbacks.length === 0) {
+              html += '<p class="info">No callbacks received yet</p>';
+            } else {
+              html += '<div class="callback-list">';
+              data.callbacks.forEach((callback) => {
+                const status =
+                  callback.ResultCode === "0000" ? "success" : "error";
+                html += `
+                                <div class="callback-item ${status}">
+                                    <strong>User:</strong> ${
+                                      callback.user_id
+                                    } | 
+                                    <strong>Job:</strong> ${callback.job_id} | 
+                                    <strong>Result:</strong> ${
+                                      callback.ResultCode
+                                    } | 
+                                    <strong>Time:</strong> ${new Date(
+                                      callback.receivedAt
+                                    ).toLocaleString()}
+                                </div>
+                            `;
+              });
+              html += "</div>";
+            }
+            results.innerHTML = html;
+          } else {
+            results.innerHTML =
+              '<div class="error">❌ Failed to fetch callbacks</div>';
+          }
+        } catch (error) {
+          results.innerHTML = `<div class="error">❌ Error fetching callbacks: ${error.message}</div>`;
+        }
+      }
+
+      // Clear debug logs
+      function clearDebugLogs() {
+        debugLogs = [];
+        updateDebugConsole();
+        console.log("Debug logs cleared");
+      }
+
+      // Initialize debug page
+      window.onload = function () {
+        console.log("SmileID Debug page loaded");
+        checkEnvironment();
+      };
+    </script>
+  </body>
+</html>
