@@ -348,8 +348,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>SmileID Integration Test - Correct Implementation</h1>
-            <p>Using proper SmileID Web Components API v2</p>
+            <h1>SmileID Document Verification</h1>
+            <p>Document verification using SmileID Web Components API v2</p>
             <div class="nav-links">
                 <a href="/debug" class="link">Debug Page</a>
                 <a href="/health" class="link">Health Check</a>
@@ -357,12 +357,12 @@
         </header>
 
         <div class="instructions">
-            <h4>How it works:</h4>
-            <p>1. Select capture mode and configure settings</p>
-            <p>2. Click "Start Capture" to initialize SmileID camera</p>
-            <p>3. Take your selfie/document photos following the on-screen instructions</p>
-            <p>4. After review and approval, the Submit button will automatically appear</p>
-            <p>5. Click Submit to send for verification</p>
+            <h4>Document Verification Process:</h4>
+            <p>1. Configure your user ID and product settings</p>
+            <p>2. Click "Start Document Capture" to begin</p>
+            <p>3. Follow on-screen instructions to capture document front and back</p>
+            <p>4. Review your captured documents</p>
+            <p>5. After approval, click Submit for verification</p>
         </div>
 
         <main>
@@ -372,29 +372,17 @@
                     <input type="text" id="userId" placeholder="Leave empty for auto-generation" value="test-user-001">
                 </div>
                 
-                <div class="capture-mode">
-                    <label for="captureMode">CAPTURE MODE:</label>
-                    <select id="captureMode">
-                        <option value="selfie">Selfie Only</option>
-                        <option value="document">Document Only</option>
-                        <option value="both">Selfie + Document</option>
-                    </select>
-                </div>
+
 
                 <div class="form-group">
                     <label for="product">PRODUCT:</label>
                     <select id="product">
-                        <option value="biometric_kyc">Biometric KYC</option>
-                        <option value="smartselfie">SmartSelfie</option>
                         <option value="doc_verification">Document Verification</option>
-                        <option value="enhanced_kyc">Enhanced KYC</option>
-                        <option value="basic_kyc">Basic KYC</option>
-                        <option value="authentication">Authentication</option>
                     </select>
                 </div>
 
                 <div class="button-group">
-                    <button id="startCaptureBtn" class="btn btn-primary">Start Capture</button>
+                    <button id="startCaptureBtn" class="btn btn-primary">Start Document Capture</button>
                     <button id="resetBtn" class="btn btn-secondary">Reset</button>
                     <button id="clearLogsBtn" class="btn btn-tertiary">Clear Logs</button>
                 </div>
@@ -438,8 +426,8 @@
 
             init() {
                 this.bindEvents();
-                this.log('SmileID Web Components v2 loaded - Ready to start', 'INFO');
-                this.log('Using proper smart-camera-web.publish event handling', 'INFO');
+                this.log('SmileID Document Verification loaded - Ready to start', 'INFO');
+                this.log('Using document-capture-screens.publish event handling', 'INFO');
             }
 
             bindEvents() {
@@ -452,86 +440,50 @@
             startCapture() {
                 try {
                     this.showLoading(true);
-                    this.log('Starting SmileID capture process...', 'INFO');
+                    this.log('Starting SmileID document capture...', 'INFO');
 
-                    const captureMode = document.getElementById('captureMode').value;
                     const userId = document.getElementById('userId').value || this.generateUserId();
                     
                     // Update user ID field if auto-generated
                     document.getElementById('userId').value = userId;
                     
-                    this.log(`Capture mode: ${captureMode}, User ID: ${userId}`, 'INFO');
+                    this.log(`Document verification for User ID: ${userId}`, 'INFO');
                     
                     // Clear any existing component
                     this.clearComponent();
                     
-                    // Create the appropriate component based on mode
-                    this.createComponent(captureMode);
+                    // Create document capture component
+                    this.createDocumentComponent();
                     
                     this.showLoading(false);
                     this.isInitialized = true;
                     
                 } catch (error) {
-                    this.log(`Error starting capture: ${error.message}`, 'ERROR');
+                    this.log(`Error starting document capture: ${error.message}`, 'ERROR');
                     this.showLoading(false);
                 }
             }
 
-            createComponent(mode) {
+            createDocumentComponent() {
                 const container = document.getElementById('smileContainer');
-                let component;
-
-                switch (mode) {
-                    case 'selfie':
-                        component = document.createElement('selfie-capture-screens');
-                        this.setupSelfieEvents(component);
-                        this.log('Created selfie-capture-screens component', 'SUCCESS');
-                        break;
-                        
-                    case 'document':
-                        component = document.createElement('document-capture-screens');
-                        this.setupDocumentEvents(component);
-                        this.log('Created document-capture-screens component', 'SUCCESS');
-                        break;
-                        
-                    case 'both':
-                        component = document.createElement('smart-camera-web');
-                        component.setAttribute('capture-id', '');
-                        component.setAttribute('theme-color', '#667eea');
-                        this.setupSmartCameraEvents(component);
-                        this.log('Created smart-camera-web component with document capture', 'SUCCESS');
-                        break;
-                        
-                    default:
-                        throw new Error('Invalid capture mode');
-                }
-
-                // Common attributes
+                const component = document.createElement('document-capture-screens');
+                
+                // Configure document capture settings
+                component.setAttribute('theme-color', '#667eea');
                 component.setAttribute('hide-instructions', 'false');
+                
+                // Set up document capture events
+                this.setupDocumentEvents(component);
                 
                 container.appendChild(component);
                 container.style.display = 'block';
                 this.currentComponent = component;
                 
-                this.updateStatus('📸 SmileID camera ready - Follow the on-screen instructions');
+                this.log('Created document-capture-screens component', 'SUCCESS');
+                this.updateStatus('📄 Document capture ready - Please capture front and back of your document');
             }
 
-            setupSelfieEvents(component) {
-                // Listen for the publish event (when user approves captured image)
-                component.addEventListener('selfie-capture-screens.publish', (event) => {
-                    this.log('✅ Selfie capture completed!', 'SUCCESS');
-                    this.handleCaptureComplete(event.detail);
-                });
 
-                component.addEventListener('selfie-capture-screens.cancelled', (event) => {
-                    this.log('❌ Selfie capture cancelled', 'WARNING');
-                    this.handleCaptureCancelled();
-                });
-
-                component.addEventListener('selfie-capture-screens.back', (event) => {
-                    this.log('⬅️ User went back in selfie capture', 'INFO');
-                });
-            }
 
             setupDocumentEvents(component) {
                 component.addEventListener('document-capture-screens.publish', (event) => {
@@ -549,21 +501,7 @@
                 });
             }
 
-            setupSmartCameraEvents(component) {
-                component.addEventListener('smart-camera-web.publish', (event) => {
-                    this.log('✅ Smart camera capture completed!', 'SUCCESS');
-                    this.handleCaptureComplete(event.detail);
-                });
 
-                component.addEventListener('smart-camera-web.cancelled', (event) => {
-                    this.log('❌ Smart camera capture cancelled', 'WARNING');
-                    this.handleCaptureCancelled();
-                });
-
-                component.addEventListener('smart-camera-web.back', (event) => {
-                    this.log('⬅️ User went back in smart camera', 'INFO');
-                });
-            }
 
             handleCaptureComplete(data) {
                 this.capturedData = data;
@@ -635,12 +573,12 @@
             }
 
             reset() {
-                this.log('🔄 Resetting application...', 'INFO');
+                this.log('🔄 Resetting document verification...', 'INFO');
                 this.clearComponent();
                 this.capturedData = null;
                 this.isInitialized = false;
                 this.hideSubmitButton();
-                this.updateStatus('Ready to start capture');
+                this.updateStatus('Ready to start document capture');
             }
 
             clearComponent() {
