@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmileID API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        pre { background: #f1f3f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>SmileID API Testing</h1>
+    <p>Test SmileID backend integration without camera interface</p>
+    
+    <div class="test-section">
+        <h3>1. Test Health Check</h3>
+        <button class="btn btn-primary" onclick="testHealth()">Test Health</button>
+        <div id="health-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Test Token Generation</h3>
+        <input type="text" id="test-user-id" placeholder="User ID" value="api-test-001">
+        <select id="test-product">
+            <option value="smartselfie">SmartSelfie</option>
+            <option value="biometric_kyc">Biometric KYC</option>
+        </select>
+        <button class="btn btn-primary" onclick="testTokenGeneration()">Generate Token</button>
+        <div id="token-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Test Job Submission</h3>
+        <button class="btn btn-primary" onclick="testJobSubmission()" id="submit-btn" disabled>Submit Test Job</button>
+        <div id="submit-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Test Status Check</h3>
+        <button class="btn btn-primary" onclick="testStatusCheck()" id="status-btn" disabled>Check Status</button>
+        <div id="status-result" class="result"></div>
+    </div>
+
+    <script>
+        let testJobId = null;
+        let testUserId = null;
+
+        async function testHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                document.getElementById('health-result').innerHTML = `
+                    <h4>✅ Health Check Result:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('health-result').innerHTML = `
+                    <h4>❌ Health Check Failed:</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testTokenGeneration() {
+            const userId = document.getElementById('test-user-id').value;
+            const product = document.getElementById('test-product').value;
+            
+            try {
+                const response = await fetch('/api/token/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, product })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    testJobId = data.jobId;
+                    testUserId = data.userId;
+                    document.getElementById('submit-btn').disabled = false;
+                    document.getElementById('status-btn').disabled = false;
+                }
+                
+                document.getElementById('token-result').innerHTML = `
+                    <h4>${data.success ? '✅' : '❌'} Token Generation Result:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('token-result').innerHTML = `
+                    <h4>❌ Token Generation Failed:</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testJobSubmission() {
+            if (!testJobId || !testUserId) {
+                alert('Generate a token first!');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/status/submit-job', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: testUserId,
+                        jobId: testJobId,
+                        jobType: document.getElementById('test-product').value,
+                        images: { selfie: 'test-image-data-api-test' }
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('submit-result').innerHTML = `
+                    <h4>${data.success ? '✅' : '❌'} Job Submission Result:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('submit-result').innerHTML = `
+                    <h4>❌ Job Submission Failed:</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testStatusCheck() {
+            if (!testJobId || !testUserId) {
+                alert('Generate a token and submit a job first!');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/status/${testUserId}/${testJobId}`);
+                const data = await response.json();
+                document.getElementById('status-result').innerHTML = `
+                    <h4>${data.success ? '✅' : '❌'} Status Check Result:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('status-result').innerHTML = `
+                    <h4>❌ Status Check Failed:</h4>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

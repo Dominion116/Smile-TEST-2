@@ -4,7 +4,289 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmileID Integration</title>
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        header p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .link:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .controls {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #ed64a6;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #d53f8c;
+            transform: translateY(-2px);
+        }
+
+        .btn-tertiary {
+            background: #38b2ac;
+            color: white;
+        }
+
+        .btn-tertiary:hover:not(:disabled) {
+            background: #319795;
+            transform: translateY(-2px);
+        }
+
+        .btn-submit {
+            background: #48bb78;
+            color: white;
+            display: none;
+            margin-top: 15px;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .sdk-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 200px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status-display {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-top: 20px;
+        }
+
+        .status-display h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .results {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .results-content {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .timestamp {
+            color: #a0aec0;
+            min-width: 80px;
+        }
+
+        .level {
+            min-width: 60px;
+            font-weight: bold;
+        }
+
+        .level.success {
+            color: #68d391;
+        }
+
+        .level.error {
+            color: #fc8181;
+        }
+
+        .level.warning {
+            color: #f6e05e;
+        }
+
+        .level.info {
+            color: #63b3ed;
+        }
+
+        .message {
+            flex: 1;
+        }
+
+        smart-camera-web {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
     <script src="https://cdn.smileidentity.com/js/v1.4.2/smart-camera-web.js"></script>
 </head>
 <body>
@@ -21,12 +303,12 @@
         <main>
             <div class="controls">
                 <div class="form-group">
-                    <label for="userId">User ID:</label>
+                    <label for="userId">USER ID:</label>
                     <input type="text" id="userId" placeholder="Leave empty for auto-generation" value="test-user-001">
                 </div>
                 
                 <div class="form-group">
-                    <label for="product">Product:</label>
+                    <label for="product">PRODUCT:</label>
                     <select id="product">
                         <option value="biometric_kyc">Biometric KYC</option>
                         <option value="smartselfie">SmartSelfie</option>
@@ -56,25 +338,226 @@
                     style="display: none; width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 8px;">
                 </smart-camera-web>
 
+                <!-- Submit button - initially hidden -->
+                <button id="submitBtn" class="btn btn-submit">Submit Verification</button>
+
                 <div id="status-display" class="status-display hidden">
                     <h4>Current Status</h4>
-                    <div id="status-content"></div>
+                    <div id="status-content">Ready for verification</div>
                 </div>
             </div>
 
             <div class="results">
                 <h3>Activity Log</h3>
                 <div id="results" class="results-content">
-                    <div class="log-entry info">
-                        <span class="timestamp">${new Date().toISOString()}</span>
-                        <span class="level">INFO</span>
-                        <span class="message">Application loaded - Ready to test SmileID integration</span>
-                    </div>
+                    <!-- Log entries will be populated by JavaScript -->
                 </div>
             </div>
         </main>
     </div>
 
-    <script src="js/app.js"></script>
+    <script>
+        class SmileIDIntegration {
+            constructor() {
+                this.camera = null;
+                this.isInitialized = false;
+                this.capturedData = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.log('Application loaded - Ready to test SmileID integration', 'INFO');
+            }
+
+            bindEvents() {
+                document.getElementById('initializeBtn').addEventListener('click', () => this.initializeSmileID());
+                document.getElementById('checkStatusBtn').addEventListener('click', () => this.checkStatus());
+                document.getElementById('clearLogsBtn').addEventListener('click', () => this.clearLogs());
+                document.getElementById('submitBtn').addEventListener('click', () => this.submitVerification());
+            }
+
+            async initializeSmileID() {
+                try {
+                    this.showLoading(true);
+                    this.log('Starting initialization', 'INFO');
+
+                    const userId = document.getElementById('userId').value || this.generateUserId();
+                    const product = document.getElementById('product').value;
+
+                    document.getElementById('userId').value = userId;
+                    this.log(`Initializing with userId: ${userId}, product: ${product}`, 'INFO');
+
+                    const token = await this.generateToken(userId, product);
+                    this.log('Token generated successfully', 'SUCCESS');
+
+                    this.camera = document.getElementById('smileCamera');
+                    this.camera.setAttribute('token', token);
+                    this.camera.setAttribute('show-navigation', 'true');
+                    this.camera.setAttribute('allow-close', 'true');
+                    
+                    this.setupCameraEventListeners();
+                    this.camera.style.display = 'block';
+                    this.showLoading(false);
+                    
+                    this.log('SmileID camera interface ready', 'SUCCESS');
+                    this.isInitialized = true;
+                    document.getElementById('checkStatusBtn').disabled = false;
+
+                } catch (error) {
+                    this.log(`Initialization error: ${error.message}`, 'ERROR');
+                    this.showLoading(false);
+                }
+            }
+
+            setupCameraEventListeners() {
+                this.camera.addEventListener('imagesComputed', (event) => {
+                    this.log('Images computed successfully', 'SUCCESS');
+                    this.capturedData = event.detail;
+                    this.showSubmitButton(true);
+                    this.updateStatus('Ready for verification - Click Submit to verify');
+                    this.log(`Captured data ready for submission`, 'SUCCESS');
+                });
+
+                this.camera.addEventListener('close', () => {
+                    this.log('Camera interface closed', 'INFO');
+                    this.hideSubmitButton();
+                });
+
+                this.camera.addEventListener('error', (error) => {
+                    this.log(`Camera error: ${error.detail}`, 'ERROR');
+                    this.hideSubmitButton();
+                });
+            }
+
+            async submitVerification() {
+                if (!this.capturedData) {
+                    this.log('No captured data available for submission', 'ERROR');
+                    return;
+                }
+
+                try {
+                    this.log('Submitting verification...', 'INFO');
+                    
+                    const submitBtn = document.getElementById('submitBtn');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.textContent = 'Submitting...';
+                    submitBtn.disabled = true;
+
+                    const result = await this.mockSubmitToBackend(this.capturedData);
+                    
+                    this.log(`Verification submitted successfully: Result - ${result.status}`, 'SUCCESS');
+                    this.updateStatus(`Verification complete - Result: ${result.status}`);
+                    this.hideSubmitButton();
+                    
+                } catch (error) {
+                    this.log(`Submission error: ${error.message}`, 'ERROR');
+                    
+                    const submitBtn = document.getElementById('submitBtn');
+                    submitBtn.textContent = 'Submit Verification';
+                    submitBtn.disabled = false;
+                }
+            }
+
+            showSubmitButton(show = true) {
+                const submitBtn = document.getElementById('submitBtn');
+                if (show) {
+                    submitBtn.style.display = 'inline-block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Verification';
+                } else {
+                    submitBtn.style.display = 'none';
+                }
+            }
+
+            hideSubmitButton() {
+                this.showSubmitButton(false);
+            }
+
+            async mockSubmitToBackend(capturedData) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            status: 'success',
+                            confidence: 0.95,
+                            jobId: 'job_' + Date.now(),
+                            timestamp: new Date().toISOString()
+                        });
+                    }, 2000);
+                });
+            }
+
+            async generateToken(userId, product) {
+                const mockToken = btoa(JSON.stringify({
+                    jobId: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    userId: userId,
+                    product: product,
+                    environment: 'sandbox',
+                    duration: 3955
+                }));
+                
+                return mockToken;
+            }
+
+            generateUserId() {
+                return `user_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            }
+
+            checkStatus() {
+                if (!this.isInitialized) {
+                    this.log('SmileID not initialized yet', 'WARNING');
+                    return;
+                }
+
+                const status = this.capturedData ? 'Ready for verification' : 'Waiting for selfie capture';
+                this.updateStatus(status);
+                this.log(`Current status: ${status}`, 'INFO');
+            }
+
+            updateStatus(message) {
+                const statusDisplay = document.getElementById('status-display');
+                const statusContent = document.getElementById('status-content');
+                
+                statusContent.textContent = message;
+                statusDisplay.classList.remove('hidden');
+            }
+
+            showLoading(show) {
+                const loading = document.getElementById('loading');
+                if (show) {
+                    loading.classList.remove('hidden');
+                } else {
+                    loading.classList.add('hidden');
+                }
+            }
+
+            clearLogs() {
+                const results = document.getElementById('results');
+                results.innerHTML = '';
+                this.log('Logs cleared', 'INFO');
+            }
+
+            log(message, level = 'INFO') {
+                const results = document.getElementById('results');
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${level.toLowerCase()}`;
+                
+                logEntry.innerHTML = `
+                    <span class="timestamp">${timestamp}</span>
+                    <span class="level ${level.toLowerCase()}">${level}</span>
+                    <span class="message">${message}</span>
+                `;
+                
+                results.appendChild(logEntry);
+                results.scrollTop = results.scrollHeight;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new SmileIDIntegration();
+        });
+    </script>
 </body>
 </html>
